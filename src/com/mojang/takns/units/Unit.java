@@ -204,6 +204,12 @@ public abstract class Unit implements SoundSource
         }
     }
 
+    public float getHealthRatio()
+    {
+        if (maxDamage <= 0) return 0;
+        return (maxDamage - damage) / (float) maxDamage;
+    }
+
     public float getDistanceSqr(int x0, int y0)
     {
         float xd = x0 - x;

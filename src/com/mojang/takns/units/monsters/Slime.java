@@ -11,6 +11,8 @@ import com.mojang.takns.particles.CoinPickup;
 import com.mojang.takns.sprites.*;
 import com.mojang.takns.terrain.Terrain;
 import com.mojang.takns.units.*;
+import com.mojang.takns.units.buildings.Building;
+import com.mojang.takns.units.vehicles.Vehicle;
 
 public class Slime extends MoveableUnit
 {
@@ -28,6 +30,7 @@ public class Slime extends MoveableUnit
     private int jumpDuration = 0;
     private boolean dying = false;
     private int deathTicks = 0;
+    private int jumpDelay = 0;
 
     public Slime(int xTile, int yTile)
     {
@@ -100,6 +103,7 @@ public class Slime extends MoveableUnit
             baseSprite.image = visible ? healthImages[4][0] : null;
             if (deathTicks >= 16)
             {
+                clearDeathData();
                 alive = false;
                 world.particleSystem.addParticle(new CoinPickup(x, y, 4, world.playerSide, 200));
             }
@@ -114,7 +118,8 @@ public class Slime extends MoveableUnit
 
         if (!jumping)
         {
-            if (random.nextInt(10) == 0) findRandomTarget();
+            if (jumpDelay > 0) jumpDelay--;
+            if (jumpDelay == 0) findJumpTarget();
         }
         else
         {
@@ -140,32 +145,88 @@ public class Slime extends MoveableUnit
         }
     }
 
-    private void findRandomTarget()
+    private void findJumpTarget()
     {
+        Unit target = closestAttackTarget();
         int x = xTile + random.nextInt(5) - 2;
         int y = yTile + random.nextInt(5) - 2;
-        if (x >= 0 && y >= 0 && x < 64 && y < 64)
+        if (target != null)
         {
-            if (world.map.getUnitAt(x, y) != null) return;
-
-            if ((world.map.getTerrainTypeAt(x, y).passableFlags & Terrain.PASSABLE_LAND) == 0) return;
-
-
-            world.map.unblock(xTile, yTile);
-            world.map.block(x, y, this);
-
-            xJumpSource = this.x;
-            yJumpSource = this.y;
-            xJumpTarget = x;
-            yJumpTarget = y;
-            jumping = true;
-            jumpTime = 0;
-
-            int xd = xJumpTarget - xTile;
-            int yd = yJumpTarget - yTile;
-
-            jumpDuration = (int) (Math.sqrt(xd * xd + yd * yd) * 6);
+            int xd = (int) (target.x / 16) - xTile;
+            int yd = (int) (target.y / 16) - yTile;
+            int sx = xd == 0 ? 0 : (xd > 0 ? 1 : -1);
+            int sy = yd == 0 ? 0 : (yd > 0 ? 1 : -1);
+            int step = (Math.abs(xd) + Math.abs(yd) > 3) ? 2 : 1;
+            x = xTile + sx * step;
+            y = yTile + sy * step;
         }
+
+        if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
+        if (world.map.getUnitAt(x, y) != null) return;
+        if ((world.map.getTerrainTypeAt(x, y).passableFlags & Terrain.PASSABLE_LAND) == 0) return;
+
+        world.map.unblock(xTile, yTile);
+        world.map.block(x, y, this);
+
+        xJumpSource = this.x;
+        yJumpSource = this.y;
+        xJumpTarget = x;
+        yJumpTarget = y;
+        jumping = true;
+        jumpTime = 0;
+
+        int xd = xJumpTarget - xTile;
+        int yd = yJumpTarget - yTile;
+        jumpDuration = (int) (Math.sqrt(xd * xd + yd * yd) * 6);
+        if (jumpDuration < 1) jumpDuration = 1;
+
+        if (target != null)
+        {
+            int tx = (int) (target.x / 16);
+            int ty = (int) (target.y / 16);
+            int d = Math.abs(tx - xJumpTarget) + Math.abs(ty - yJumpTarget);
+            if (d <= 1)
+            {
+                target.hurt(1);
+            }
+            jumpDelay = 2 + Math.min(16, d * 2);
+        }
+        else
+        {
+            jumpDelay = 8 + random.nextInt(8);
+        }
+    }
+
+    private Unit closestAttackTarget()
+    {
+        Unit closest = null;
+        float closestD = -1;
+        for (int i = 0; i < world.playerSide.units.units.size(); i++)
+        {
+            Unit unit = world.playerSide.units.units.get(i);
+            if (!unit.alive) continue;
+            if (!(unit instanceof Vehicle) && !(unit instanceof Building)) continue;
+            float d = getDistanceSqr((int) unit.x, (int) unit.y);
+            if (closest == null || d < closestD)
+            {
+                closest = unit;
+                closestD = d;
+            }
+        }
+        return closest;
+    }
+
+    private void clearDeathData()
+    {
+        baseSprite.image = null;
+        baseShadow.image = null;
+        healthImages = null;
+        baseImages = null;
+        shadowImage = null;
+        jumping = false;
+        jumpTime = 0;
+        jumpDuration = 0;
+        jumpDelay = 0;
     }
 
     public void render(float alpha)
