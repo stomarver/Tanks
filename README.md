@@ -1,9 +1,20 @@
 ```bash
-./scripts/compile.sh   //clean compile
+//Linux
+./scripts/clean.sh   //Clean Build
 ./scripts/run.sh
+./scripts/fat.sh   //FatJar Build
+```
+
+```bat
+//Windows
+scripts\\clean.bat
+scripts\\run.bat
+scripts\\fat.bat
 ```
 
 ```bash
-./scripts/fat-compile.sh   //FatJar compile
-java -jar dist/takns.jar
+//MacOS
+./scripts/clean.command
+./scripts/run.command
+./scripts/fat.command
 ```
