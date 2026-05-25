@@ -2,6 +2,8 @@ package com.mojang.takns.units.monsters;
 
 import java.awt.image.BufferedImage;
 
+import com.mojang.takns.ImageConverter;
+
 import com.mojang.takns.Side;
 import com.mojang.takns.Sprite;
 import com.mojang.takns.World;
@@ -13,6 +15,7 @@ public class Slime extends MoveableUnit
 {
     protected BufferedImage baseImages[];
     protected BufferedImage shadowImage;
+    private BufferedImage[][] healthImages;
     private Sprite baseSprite;
     private Sprite baseShadow;
 
@@ -39,6 +42,7 @@ public class Slime extends MoveableUnit
 
         this.baseImages = MonsterSprites.blob;
         this.shadowImage = MonsterSprites.blobShadow;
+        this.healthImages = createHealthImages(this.baseImages);
     }
 
     public void setSide(Side side)
@@ -106,7 +110,7 @@ public class Slime extends MoveableUnit
                 z = 0;
                 jumpTime = 0;
                 jumping = false;
-                baseSprite.image = baseImages[0];
+                baseSprite.image = healthImages[getHealthBand()][0];
             }
             else
             {
@@ -115,7 +119,7 @@ public class Slime extends MoveableUnit
                 y = yJumpSource + (yJumpTarget * 16 + 8 - yJumpSource) * progress;
                 z = (float) (Math.sin(progress * Math.PI) * jumpDuration);
 
-                baseSprite.image = baseImages[1];
+                baseSprite.image = healthImages[getHealthBand()][1];
             }
         }
     }
@@ -167,6 +171,71 @@ public class Slime extends MoveableUnit
         baseShadow.x = xx + zz / 2;
         baseShadow.y = yy + zz;
         baseShadow.image = shadowImage;
+    }
+
+    
+
+    private int getHealthBand()
+    {
+        float health = 1.0f - (damage / (float) maxDamage);
+        if (health <= 0.0f) return 4;
+        if (health <= 0.50f) return 3;
+        if (health <= 0.66f) return 2;
+        if (health <= 0.75f) return 1;
+        return 0;
+    }
+
+    private BufferedImage[][] createHealthImages(BufferedImage[] source)
+    {
+        BufferedImage[][] images = new BufferedImage[5][source.length];
+        float[][] palette = {
+                {1.00f, 1.00f, 1.00f}, // 100% green as original
+                {0.85f, 0.85f, 0.25f}, // 75% yellow + darker
+                {0.85f, 0.50f, 0.18f}, // 66% orange + darker
+                {0.65f, 0.18f, 0.18f}, // 50% red + darker
+                {0.14f, 0.04f, 0.04f}  // 0% almost black with red tint
+        };
+
+        for (int band = 0; band < images.length; band++)
+        {
+            for (int i = 0; i < source.length; i++)
+            {
+                images[band][i] = tint(source[i], palette[band][0], palette[band][1], palette[band][2]);
+            }
+        }
+
+        return images;
+    }
+
+    private BufferedImage tint(BufferedImage src, float rMul, float gMul, float bMul)
+    {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int[] pixels = new int[w * h];
+        src.getRGB(0, 0, w, h, pixels, 0, w);
+
+        for (int i = 0; i < pixels.length; i++)
+        {
+            int c = pixels[i];
+            int a = (c >>> 24) & 0xff;
+            if (a == 0) continue;
+
+            int r = (c >>> 16) & 0xff;
+            int g = (c >>> 8) & 0xff;
+            int b = c & 0xff;
+
+            r = (int) (r * rMul);
+            g = (int) (g * gMul);
+            b = (int) (b * bMul);
+
+            if (r > 255) r = 255;
+            if (g > 255) g = 255;
+            if (b > 255) b = 255;
+
+            pixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+
+        return ImageConverter.convert(w, h, pixels, 2);
     }
 
     public String getName()

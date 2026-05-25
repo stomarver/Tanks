@@ -218,6 +218,7 @@ public class Takns extends Canvas implements Runnable
             }
 
             bufferStrategy.show();
+            Toolkit.getDefaultToolkit().sync();
 
             try { Thread.sleep(20); } catch (InterruptedException e) { e.printStackTrace(); }
         }
@@ -271,6 +272,7 @@ public class Takns extends Canvas implements Runnable
             gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
             gr.dispose();
             bufferStrategy.show();
+            Toolkit.getDefaultToolkit().sync();
 
             try { Thread.sleep(2); } catch (InterruptedException e) { e.printStackTrace(); }
         }
