@@ -11,7 +11,9 @@ import com.mojang.takns.gui.UiComponent;
 public class InputHandler implements MouseMotionListener, MouseListener, KeyListener
 {
     private UiComponent component;
-    private int scale;
+    private int inputScale;
+    private int xOffset;
+    private int yOffset;
     private UiComponent dragSource;
     private int dragButton = -1;
     private int xDragStart;
@@ -25,7 +27,34 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
     public InputHandler(UiComponent component, int scale)
     {
         this.component = component;
-        this.scale = scale;
+        this.inputScale = scale;
+    }
+
+
+    public void setViewport(int inputScale, int xOffset, int yOffset)
+    {
+        synchronized (lock)
+        {
+            this.inputScale = Math.max(1, inputScale);
+            this.xOffset = xOffset;
+            this.yOffset = yOffset;
+        }
+    }
+
+    private void setMousePosition(MouseEvent e)
+    {
+        int mouseX = e.getX() - xOffset;
+        int mouseY = e.getY() - yOffset;
+
+        if (mouseX < 0 || mouseY < 0)
+        {
+            xMouse = -999;
+            yMouse = -999;
+            return;
+        }
+
+        xMouse = mouseX / inputScale;
+        yMouse = mouseY / inputScale;
     }
 
     public void mouseDragged(MouseEvent e)
@@ -40,8 +69,7 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
     {
         synchronized (lock)
         {
-            xMouse = e.getX() / scale;
-            yMouse = e.getY() / scale;
+            setMousePosition(e);
             UiComponent hovered = component.getComponentAt(xMouse, yMouse);
 
             if (dragSource != null)
@@ -78,8 +106,7 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
         {
             mouseMoved(e);
 
-            xMouse = e.getX() / scale;
-            yMouse = e.getY() / scale;
+            setMousePosition(e);
 
             if (lastHovered != null) lastHovered.mouseClicked(xMouse, yMouse, e.getButton(), e.getClickCount());
         }
@@ -106,8 +133,7 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
     {
         synchronized (lock)
         {
-            xMouse = e.getX() / scale;
-            yMouse = e.getY() / scale;
+            setMousePosition(e);
             int button = e.getButton();
 
             if (button != dragButton)
@@ -155,8 +181,7 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
         {
             mouseMoved(e);
 
-            xMouse = e.getX() / scale;
-            yMouse = e.getY() / scale;
+            setMousePosition(e);
             int button = e.getButton();
 
             stopDragging(xMouse, yMouse, button);

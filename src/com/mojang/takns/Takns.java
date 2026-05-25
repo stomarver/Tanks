@@ -92,6 +92,9 @@ public class Takns extends Canvas implements Runnable
     private Rectangle windowedBounds;
     private volatile boolean recreateBufferStrategy;
     private volatile boolean fullscreenTransitionInProgress;
+    private int presentScale = 1;
+    private int presentOffsetX;
+    private int presentOffsetY;
 
     public Takns()
     {
@@ -216,6 +219,31 @@ public class Takns extends Canvas implements Runnable
         }
     }
 
+
+    private void updatePresentationViewport()
+    {
+        int canvasWidth = Math.max(1, getWidth());
+        int canvasHeight = Math.max(1, getHeight());
+
+        int baseWidth = SCREEN_WIDTH * SCALE;
+        int baseHeight = SCREEN_HEIGHT * SCALE;
+
+        int sx = Math.max(1, canvasWidth / baseWidth);
+        int sy = Math.max(1, canvasHeight / baseHeight);
+        presentScale = Math.max(1, Math.min(sx, sy));
+
+        int scaledWidth = baseWidth * presentScale;
+        int scaledHeight = baseHeight * presentScale;
+
+        presentOffsetX = (canvasWidth - scaledWidth) / 2;
+        presentOffsetY = (canvasHeight - scaledHeight) / 2;
+
+        if (inputHandler != null)
+        {
+            inputHandler.setViewport(SCALE * presentScale, presentOffsetX, presentOffsetY);
+        }
+    }
+
     public void run()
     {
         setup();
@@ -224,6 +252,7 @@ public class Takns extends Canvas implements Runnable
         addMouseMotionListener(inputHandler);
         addMouseListener(inputHandler);
         addKeyListener(inputHandler);
+        updatePresentationViewport();
         Graphics2D g = null;
         if (image != null)
         {
@@ -232,6 +261,7 @@ public class Takns extends Canvas implements Runnable
 
         while (keepGoing)
         {
+            updatePresentationViewport();
             if (image == null || image.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
             {
                 if (g != null)
@@ -271,7 +301,11 @@ public class Takns extends Canvas implements Runnable
             try
             {
                 Graphics gr = bufferStrategy.getDrawGraphics();
-                gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+                int targetWidth = SCREEN_WIDTH * SCALE * presentScale;
+                int targetHeight = SCREEN_HEIGHT * SCALE * presentScale;
+                gr.setColor(Color.BLACK);
+                gr.fillRect(0, 0, getWidth(), getHeight());
+                gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + targetWidth, presentOffsetY + targetHeight, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, null);
                 gr.dispose();
                 bufferStrategy.show();
             }
