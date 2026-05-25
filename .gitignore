@@ -1,7 +1,31 @@
 # IntelliJ
 .idea/
 *.iml
+
+# VS Code local cache (workspace tasks/launch are versioned below)
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Eclipse / Buildship / JDT local metadata
+.metadata/
+.settings/
+bin/
+
+# Gradle/Maven caches if used locally
+.gradle/
+target/
+
+# Build outputs
 out/
+dist/
+*.class
+*.jar
+
+# Runtime / temp logs
+*.log
+hs_err_pid*
+replay_pid*
 
 # Keep shared Run Configs in VCS
 !.run/
@@ -9,3 +33,5 @@ out/
 
 # OS/editor
 .DS_Store
+Thumbs.db
+*~
