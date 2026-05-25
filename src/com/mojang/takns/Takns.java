@@ -79,7 +79,7 @@ public class Takns extends Canvas implements Runnable
 
     private Timer timer = new Timer(TICKS_PER_SECOND);
 
-    private boolean keepGoing = true;
+    private volatile boolean keepGoing = true;
     private World world = new World();
 
     private BufferStrategy bufferStrategy;
@@ -116,7 +116,15 @@ public class Takns extends Canvas implements Runnable
 
     public void start() { new Thread(this).start(); }
 
-    public void stop() { keepGoing = false; }
+    public void stop()
+    {
+        keepGoing = false;
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null)
+        {
+            window.dispose();
+        }
+    }
 
     MojangLogo mojangLogo = new MojangLogo();
     boolean noLogo = false;
@@ -197,7 +205,7 @@ public class Takns extends Canvas implements Runnable
                 g.drawImage(titleImage, 0, 0, null);
                 g.setColor(new Color(0.1f, 0.1f, 0.2f, 0.8f));
                 g.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10);
-                Text.drawString(currentStatus, g, 2, SCREEN_HEIGHT - 7);
+                Text.drawString(currentStatus, g, 2, SCREEN_HEIGHT - 8);
                 g.setColor(new Color(1, 1, 1, 1.0f));
                 g.dispose();
 
@@ -232,6 +240,11 @@ public class Takns extends Canvas implements Runnable
 
         while (keepGoing)
         {
+            if (inputHandler.keys[KeyEvent.VK_ESCAPE])
+            {
+                stop();
+                break;
+            }
             updatePresentationViewport();
 
             if (image == null || image.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
@@ -283,12 +296,19 @@ public class Takns extends Canvas implements Runnable
 
     public static void main(String[] args)
     {
-        JFrame frame = new JFrame("Takns");
+        JFrame frame = new JFrame();
         Takns takns = new Takns();
+
+        frame.setUndecorated(true);
         frame.add(takns);
         frame.pack();
         frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (screenSize.width - frame.getWidth()) / 2;
+        int y = (screenSize.height - frame.getHeight()) / 2;
+        frame.setLocation(Math.max(0, x), Math.max(0, y));
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
         takns.init();
