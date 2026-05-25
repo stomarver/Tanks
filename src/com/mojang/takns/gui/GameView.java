@@ -88,7 +88,8 @@ public class GameView extends UiComponent
         {
             MoveClickEffect fx = moveClickEffects.get(i);
             float progress = fx.age / (float) fx.maxAge;
-            int radius = 3 + (int) (progress * 14);
+            int radius = 17 - (int) (progress * 14);
+            if (radius < 3) radius = 3;
             float alpha = 1.0f - progress;
             if (alpha < 0) alpha = 0;
             g.setColor(new Color(0.65f, 0.95f, 1.0f, alpha));
@@ -122,10 +123,39 @@ public class GameView extends UiComponent
                 int xNext = xTile * 16 + 8;
                 int yNext = yTile * 16 + 8;
 
-                g.drawLine(xPrev - world.xCam, yPrev - world.yCam, xNext - world.xCam, yNext - world.yCam);
+                int x0 = xPrev - world.xCam;
+                int y0 = yPrev - world.yCam;
+                int x1 = xNext - world.xCam;
+                int y1 = yNext - world.yCam;
+                drawDashedLine(g, x0, y0, x1, y1, 4, 3);
                 xPrev = xNext;
                 yPrev = yNext;
             }
+        }
+    }
+
+    private void drawDashedLine(Graphics2D g, int x0, int y0, int x1, int y1, int dash, int gap)
+    {
+        int dx = x1 - x0;
+        int dy = y1 - y0;
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        if (len <= 0.001f) return;
+
+        float ux = dx / len;
+        float uy = dy / len;
+        float pos = 0;
+        while (pos < len)
+        {
+            float end = pos + dash;
+            if (end > len) end = len;
+
+            int sx = (int) (x0 + ux * pos);
+            int sy = (int) (y0 + uy * pos);
+            int ex = (int) (x0 + ux * end);
+            int ey = (int) (y0 + uy * end);
+            g.drawLine(sx, sy, ex, ey);
+
+            pos += dash + gap;
         }
     }
 
