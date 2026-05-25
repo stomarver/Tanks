@@ -87,6 +87,9 @@ public class Takns extends Canvas implements Runnable
     private VolatileImage image;
     private UiComponent gameComponent = new UiComponent();
     private InputHandler inputHandler;
+    private boolean fWasDown = false;
+    private boolean fullscreen = false;
+    private Rectangle windowedBounds;
 
     public Takns()
     {
@@ -265,12 +268,57 @@ public class Takns extends Canvas implements Runnable
         }
     }
 
+
+    private void toggleFullscreen()
+    {
+        EventQueue.invokeLater(() ->
+        {
+            Window window = SwingUtilities.getWindowAncestor(Takns.this);
+            if (!(window instanceof JFrame)) return;
+
+            JFrame frame = (JFrame) window;
+            GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+            if (!fullscreen)
+            {
+                windowedBounds = frame.getBounds();
+                frame.dispose();
+                frame.setUndecorated(true);
+                frame.setResizable(false);
+                device.setFullScreenWindow(frame);
+                frame.setVisible(true);
+                fullscreen = true;
+            }
+            else
+            {
+                device.setFullScreenWindow(null);
+                frame.dispose();
+                frame.setUndecorated(false);
+                frame.setResizable(false);
+                if (windowedBounds != null)
+                {
+                    frame.setBounds(windowedBounds);
+                }
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+                fullscreen = false;
+            }
+        });
+    }
+
     private float updateTime()
     {
         boolean upKey = inputHandler.keys[KeyEvent.VK_UP] || inputHandler.keys[KeyEvent.VK_NUMPAD8];
         boolean downKey = inputHandler.keys[KeyEvent.VK_DOWN] || inputHandler.keys[KeyEvent.VK_NUMPAD2];
         boolean leftKey = inputHandler.keys[KeyEvent.VK_LEFT] || inputHandler.keys[KeyEvent.VK_NUMPAD4];
         boolean rightKey = inputHandler.keys[KeyEvent.VK_RIGHT] || inputHandler.keys[KeyEvent.VK_NUMPAD6];
+        boolean fKey = inputHandler.keys[KeyEvent.VK_F];
+
+        if (fKey && !fWasDown)
+        {
+            toggleFullscreen();
+        }
+        fWasDown = fKey;
 
         int ticks = timer.advanceTime();
         if (ticks > MAX_TICKS_PER_FRAME) ticks = MAX_TICKS_PER_FRAME;
