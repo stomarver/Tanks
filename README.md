@@ -13,10 +13,23 @@ This repository contains source code for `com.mojang.takns` (Java/AWT/Swing era 
 
 ## CLI compile/run (without Gradle/Maven)
 
+Desktop-oriented compile (default; excludes legacy applet file):
+
 ```bash
 ./scripts/compile-java8.sh
 java -cp out com.mojang.takns.Takns
 ```
+
+Compile including `TaknsApplet` (requires real JDK 8 toolchain):
+
+```bash
+./scripts/compile-java8.sh --with-applet
+```
+
+## Why applet is excluded by default
+
+`TaknsApplet` uses `javax.swing.JApplet`, which was removed from modern JDK distributions.
+To keep the project runnable on current systems, default CLI build targets desktop entry point only.
 
 > Note: this project is intentionally kept build-tool agnostic here.
 > You can add Gradle/Maven yourself later without changing source layout.
