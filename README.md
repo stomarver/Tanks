@@ -1,8 +1,9 @@
 ```bash
-./scripts/compile-java8.sh
-java -cp out com.mojang.takns.Takns
+./scripts/compile.sh
+./scripts/run.sh
 ```
 
 ```bash
-./scripts/compile-java8.sh --with-applet
+./scripts/fat-compile.sh
+java -jar dist/takns.jar
 ```

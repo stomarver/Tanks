@@ -1,11 +1,27 @@
 # IntelliJ
 .idea/
 *.iml
+
+# Build outputs
 out/
+dist/
+*.class
+*.jar
+
+# IDE/editor caches
+.vscode/
+.settings/
+.metadata/
+bin/
+
+# Runtime / temp
+*.log
+hs_err_pid*
+replay_pid*
+*~
+.DS_Store
+Thumbs.db
 
 # Keep shared Run Configs in VCS
 !.run/
 !.run/*.xml
-
-# OS/editor
-.DS_Store
