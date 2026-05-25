@@ -90,6 +90,8 @@ public class Takns extends Canvas implements Runnable
     private boolean fWasDown = false;
     private boolean fullscreen = false;
     private Rectangle windowedBounds;
+    private volatile boolean recreateBufferStrategy;
+    private volatile boolean fullscreenTransitionInProgress;
 
     public Takns()
     {
@@ -252,10 +254,32 @@ public class Takns extends Canvas implements Runnable
                 g.drawImage(cursor.image, inputHandler.xMouse, inputHandler.yMouse, null);
             }
 
-            Graphics gr = bufferStrategy.getDrawGraphics();
-            gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
-            gr.dispose();
-            bufferStrategy.show();
+            if (recreateBufferStrategy && isDisplayable())
+            {
+                try
+                {
+                    createBufferStrategy(2);
+                    bufferStrategy = getBufferStrategy();
+                    recreateBufferStrategy = false;
+                }
+                catch (IllegalStateException e)
+                {
+                    continue;
+                }
+            }
+
+            try
+            {
+                Graphics gr = bufferStrategy.getDrawGraphics();
+                gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+                gr.dispose();
+                bufferStrategy.show();
+            }
+            catch (IllegalStateException e)
+            {
+                recreateBufferStrategy = true;
+                continue;
+            }
 
             try
             {
@@ -271,39 +295,67 @@ public class Takns extends Canvas implements Runnable
 
     private void toggleFullscreen()
     {
-        EventQueue.invokeLater(() ->
+        if (fullscreenTransitionInProgress) return;
+        fullscreenTransitionInProgress = true;
+
+        Runnable transition = () ->
         {
-            Window window = SwingUtilities.getWindowAncestor(Takns.this);
-            if (!(window instanceof JFrame)) return;
-
-            JFrame frame = (JFrame) window;
-            GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-
-            if (!fullscreen)
+            try
             {
-                windowedBounds = frame.getBounds();
-                frame.dispose();
-                frame.setUndecorated(true);
-                frame.setResizable(false);
-                device.setFullScreenWindow(frame);
-                frame.setVisible(true);
-                fullscreen = true;
-            }
-            else
-            {
-                device.setFullScreenWindow(null);
-                frame.dispose();
-                frame.setUndecorated(false);
-                frame.setResizable(false);
-                if (windowedBounds != null)
+                Window window = SwingUtilities.getWindowAncestor(Takns.this);
+                if (!(window instanceof JFrame)) return;
+
+                JFrame frame = (JFrame) window;
+                GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+                if (!fullscreen)
                 {
-                    frame.setBounds(windowedBounds);
+                    windowedBounds = frame.getBounds();
+                    frame.dispose();
+                    frame.setUndecorated(true);
+                    frame.setResizable(false);
+                    device.setFullScreenWindow(frame);
+                    frame.setVisible(true);
+                    fullscreen = true;
                 }
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
-                fullscreen = false;
+                else
+                {
+                    device.setFullScreenWindow(null);
+                    frame.dispose();
+                    frame.setUndecorated(false);
+                    frame.setResizable(false);
+                    if (windowedBounds != null)
+                    {
+                        frame.setBounds(windowedBounds);
+                    }
+                    frame.setLocationRelativeTo(null);
+                    frame.setVisible(true);
+                    fullscreen = false;
+                }
+
+                recreateBufferStrategy = true;
             }
-        });
+            finally
+            {
+                fullscreenTransitionInProgress = false;
+            }
+        };
+
+        if (EventQueue.isDispatchThread())
+        {
+            transition.run();
+        }
+        else
+        {
+            try
+            {
+                EventQueue.invokeAndWait(transition);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
 
     private float updateTime()
