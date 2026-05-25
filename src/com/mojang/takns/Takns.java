@@ -87,11 +87,6 @@ public class Takns extends Canvas implements Runnable
     private VolatileImage image;
     private UiComponent gameComponent = new UiComponent();
     private InputHandler inputHandler;
-    private boolean fWasDown = false;
-    private boolean fullscreen = false;
-    private Rectangle windowedBounds;
-    private volatile boolean recreateBufferStrategy;
-    private volatile boolean fullscreenTransitionInProgress;
 
     private int presentScale = SCALE;
     private int presentOffsetX;
@@ -257,89 +252,14 @@ public class Takns extends Canvas implements Runnable
                 g.drawImage(cursor.image, inputHandler.xMouse, inputHandler.yMouse, null);
             }
 
-            if (recreateBufferStrategy && isDisplayable())
-            {
-                try
-                {
-                    createBufferStrategy(2);
-                    bufferStrategy = getBufferStrategy();
-                    recreateBufferStrategy = false;
-                }
-                catch (IllegalStateException e)
-                {
-                    continue;
-                }
-            }
-
-            try
-            {
-                Graphics gr = bufferStrategy.getDrawGraphics();
-                gr.setColor(Color.BLACK);
-                gr.fillRect(0, 0, getWidth(), getHeight());
-                gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
-                gr.dispose();
-                bufferStrategy.show();
-            }
-            catch (IllegalStateException e)
-            {
-                recreateBufferStrategy = true;
-                continue;
-            }
+            Graphics gr = bufferStrategy.getDrawGraphics();
+            gr.setColor(Color.BLACK);
+            gr.fillRect(0, 0, getWidth(), getHeight());
+            gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+            gr.dispose();
+            bufferStrategy.show();
 
             try { Thread.sleep(2); } catch (InterruptedException e) { e.printStackTrace(); }
-        }
-    }
-
-    private void toggleFullscreen()
-    {
-        if (fullscreenTransitionInProgress) return;
-        fullscreenTransitionInProgress = true;
-
-        Runnable transition = () ->
-        {
-            try
-            {
-                Window window = SwingUtilities.getWindowAncestor(Takns.this);
-                if (!(window instanceof JFrame)) return;
-
-                JFrame frame = (JFrame) window;
-                GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-
-                if (!fullscreen)
-                {
-                    windowedBounds = frame.getBounds();
-                    frame.dispose();
-                    frame.setUndecorated(true);
-                    frame.setResizable(false);
-                    device.setFullScreenWindow(frame);
-                    frame.setVisible(true);
-                    fullscreen = true;
-                }
-                else
-                {
-                    device.setFullScreenWindow(null);
-                    frame.dispose();
-                    frame.setUndecorated(false);
-                    frame.setResizable(false);
-                    if (windowedBounds != null) frame.setBounds(windowedBounds);
-                    frame.setLocationRelativeTo(null);
-                    frame.setVisible(true);
-                    fullscreen = false;
-                }
-
-                recreateBufferStrategy = true;
-            }
-            finally
-            {
-                fullscreenTransitionInProgress = false;
-            }
-        };
-
-        if (EventQueue.isDispatchThread()) transition.run();
-        else
-        {
-            try { EventQueue.invokeAndWait(transition); }
-            catch (Exception e) { e.printStackTrace(); }
         }
     }
 
@@ -349,11 +269,6 @@ public class Takns extends Canvas implements Runnable
         boolean downKey = inputHandler.keys[KeyEvent.VK_DOWN] || inputHandler.keys[KeyEvent.VK_NUMPAD2];
         boolean leftKey = inputHandler.keys[KeyEvent.VK_LEFT] || inputHandler.keys[KeyEvent.VK_NUMPAD4];
         boolean rightKey = inputHandler.keys[KeyEvent.VK_RIGHT] || inputHandler.keys[KeyEvent.VK_NUMPAD6];
-        boolean fKey = inputHandler.keys[KeyEvent.VK_F];
-
-        if (fKey && !fWasDown) toggleFullscreen();
-        fWasDown = fKey;
-
         int ticks = timer.advanceTime();
         if (ticks > MAX_TICKS_PER_FRAME) ticks = MAX_TICKS_PER_FRAME;
         for (int i = 0; i < ticks; i++)
