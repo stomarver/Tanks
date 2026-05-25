@@ -33,6 +33,9 @@ public abstract class Unit implements SoundSource
 
     public int damage = 0;
     public int maxDamage = 10;
+    public boolean infested = false;
+    public int infestationDamage = 0;
+    public int infestationMaxDamage = 0;
 
     public CompoundSprite sprite = new CompoundSprite();
     protected World world;
@@ -140,6 +143,31 @@ public abstract class Unit implements SoundSource
 
     public void postRender(Graphics2D g, float alpha)
     {
+        if (infested)
+        {
+            float hp = 1.0f - infestationDamage / (float) infestationMaxDamage;
+            if (hp < 0) hp = 0;
+            Color c = getInfestationColor(hp);
+            int ix = (int) xo - 10 - world.xCam;
+            int iy = (int) yo - 10 - world.yCam;
+            int iw = 20;
+            int ih = 20;
+            if (isBuilding())
+            {
+                iw += 16;
+                ih += 16;
+            }
+
+            g.setColor(new Color(0.30f, 0.30f, 0.30f, 0.55f));
+            g.fillRect(ix, iy, iw, ih);
+            g.setColor(new Color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, 0.75f));
+            g.fillRect(ix, iy, iw, ih);
+
+            g.setColor(new Color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, 0.85f));
+            g.drawRect(ix - 1, iy - 1, iw + 1, ih + 1);
+            g.drawRect(ix + 1, iy + 1, iw - 3, ih - 3);
+        }
+
         if (selected)
         {
             float t = (selectTime - alpha);
@@ -196,6 +224,17 @@ public abstract class Unit implements SoundSource
     public void hurt(int amount)
     {
         if (amount <= 0 || !alive) return;
+        if (infested)
+        {
+            infestationDamage += amount;
+            if (infestationDamage >= infestationMaxDamage)
+            {
+                infestationDamage = infestationMaxDamage;
+                infested = false;
+                world.playerSide.addMoney(80);
+            }
+            return;
+        }
         damage += amount;
         if (damage >= maxDamage)
         {
@@ -208,6 +247,23 @@ public abstract class Unit implements SoundSource
     {
         if (maxDamage <= 0) return 0;
         return (maxDamage - damage) / (float) maxDamage;
+    }
+
+    public void infest(int slimeDamage, int slimeMaxDamage)
+    {
+        infested = true;
+        infestationDamage = slimeDamage;
+        infestationMaxDamage = slimeMaxDamage;
+        if (infestationMaxDamage <= 0) infestationMaxDamage = 1;
+    }
+
+    private Color getInfestationColor(float health)
+    {
+        if (health <= 0.0f) return new Color(36, 10, 10);
+        if (health <= 0.50f) return new Color(166, 46, 46);
+        if (health <= 0.66f) return new Color(217, 128, 46);
+        if (health <= 0.75f) return new Color(217, 217, 64);
+        return new Color(32, 220, 32);
     }
 
     public float getDistanceSqr(int x0, int y0)

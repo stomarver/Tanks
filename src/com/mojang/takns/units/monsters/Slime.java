@@ -147,7 +147,7 @@ public class Slime extends MoveableUnit
 
     private void findJumpTarget()
     {
-        Unit target = closestAttackTarget();
+        Unit target = closestAttackTarget(2);
         int x = xTile + random.nextInt(5) - 2;
         int y = yTile + random.nextInt(5) - 2;
         if (target != null)
@@ -162,7 +162,17 @@ public class Slime extends MoveableUnit
         }
 
         if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
-        if (world.map.getUnitAt(x, y) != null) return;
+        Unit occupied = world.map.getUnitAt(x, y);
+        if (occupied != null)
+        {
+            if (target != null && occupied == target)
+            {
+                occupied.infest(damage, maxDamage);
+                clearDeathData();
+                alive = false;
+            }
+            return;
+        }
         if ((world.map.getTerrainTypeAt(x, y).passableFlags & Terrain.PASSABLE_LAND) == 0) return;
 
         world.map.unblock(xTile, yTile);
@@ -197,7 +207,7 @@ public class Slime extends MoveableUnit
         }
     }
 
-    private Unit closestAttackTarget()
+    private Unit closestAttackTarget(int visionTiles)
     {
         Unit closest = null;
         float closestD = -1;
@@ -207,6 +217,8 @@ public class Slime extends MoveableUnit
             if (!unit.alive) continue;
             if (!(unit instanceof Vehicle) && !(unit instanceof Building)) continue;
             float d = getDistanceSqr((int) unit.x, (int) unit.y);
+            float vt = visionTiles * 16.0f;
+            if (d > vt * vt) continue;
             if (closest == null || d < closestD)
             {
                 closest = unit;
