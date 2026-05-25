@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="$ROOT_DIR/out"
 
 if [[ ! -d "$OUT_DIR" ]]; then
-  "$ROOT_DIR/scripts/compile.sh"
+  "$ROOT_DIR/scripts/clean.sh"
 fi
 
 exec java -cp "$OUT_DIR" com.mojang.takns.Takns "$@"

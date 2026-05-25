@@ -87,6 +87,22 @@ public abstract class MoveableUnit extends Unit
     {
     }
 
+    public int getPathLength()
+    {
+        return pathFinder.pathP;
+    }
+
+    public int getPathTileAt(int index)
+    {
+        if (index < 0 || index >= pathFinder.pathP) return -1;
+        return pathFinder.path[index];
+    }
+
+    public boolean isPathing()
+    {
+        return pathFinder.isPathing;
+    }
+
     protected boolean canTravelTo(int x, int y)
     {
     	if (world.map.tiles[x + y * 64] < 15)

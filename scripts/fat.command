@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -euo pipefail
-"$(cd "$(dirname "$0")" && pwd)/fat-compile.sh" "$@"
+"$(cd "$(dirname "$0")" && pwd)/fat.sh" "$@"

@@ -6,7 +6,7 @@ for %%I in ("%ROOT_DIR%") do set "ROOT_DIR=%%~fI"
 set "OUT_DIR=%ROOT_DIR%\out"
 
 if not exist "%OUT_DIR%" (
-  call "%ROOT_DIR%\scripts\compile.bat"
+  call "%ROOT_DIR%\scripts\clean.bat"
   if errorlevel 1 exit /b 1
 )
 

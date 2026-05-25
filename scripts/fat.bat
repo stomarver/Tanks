@@ -7,7 +7,7 @@ set "OUT_DIR=%ROOT_DIR%\out"
 set "DIST_DIR=%ROOT_DIR%\dist"
 set "JAR_PATH=%DIST_DIR%\takns.jar"
 
-call "%ROOT_DIR%\scripts\compile.bat"
+call "%ROOT_DIR%\scripts\clean.bat"
 if errorlevel 1 exit /b 1
 
 if exist "%DIST_DIR%" rmdir /s /q "%DIST_DIR%"

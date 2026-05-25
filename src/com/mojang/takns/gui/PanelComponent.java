@@ -42,7 +42,7 @@ public class PanelComponent extends UiComponent
                 int g = (int) (98 + n0 * 3);
                 int b = (int) (98 + n0 * 3);
                 
-                if (xx == 0)
+                if (xx == 0 || xx == width - 1 || yy == 0 || yy == height - 1)
                 {
                     r/=3;
                     g/=3;
@@ -111,7 +111,7 @@ public class PanelComponent extends UiComponent
                 int yy = i / 2;
 
                 BuildButton buildButton = new BuildButton(buttons[i]);
-                buildButton.init(world, x + 4 + 8 - 6 + xx * 32, y + 130 + yy * 26, 28, 24);
+                buildButton.init(world, x + 4 + 8 - 6 + xx * 32, y + 130 + yy * 27, 28, 24);
                 buttonHolder.addComponent(buildButton);
             }
         }

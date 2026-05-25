@@ -22,7 +22,7 @@ public class Takns extends Canvas implements Runnable
     public static final int SCREEN_WIDTH = 320;
     public static final int SCREEN_HEIGHT = 240;
     public static final int SCALE = 2;
-    
+
     public static final int TICKS_PER_SECOND = 25;
 
     public static final int PANEL_WIDTH = 64 + 8;
@@ -39,7 +39,7 @@ public class Takns extends Canvas implements Runnable
         {
             soundEngine = new SoundEngine();
             soundEngine.start();
-            
+
             world.soundEngine = soundEngine;
 
             currentStatus = "Creating components..";
@@ -88,6 +88,12 @@ public class Takns extends Canvas implements Runnable
     private UiComponent gameComponent = new UiComponent();
     private InputHandler inputHandler;
 
+    private int presentScale = SCALE;
+    private int presentOffsetX;
+    private int presentOffsetY;
+    private int presentWidth = SCREEN_WIDTH * SCALE;
+    private int presentHeight = SCREEN_HEIGHT * SCALE;
+
     public Takns()
     {
         setIgnoreRepaint(true);
@@ -97,34 +103,25 @@ public class Takns extends Canvas implements Runnable
         setPreferredSize(new Dimension(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE));
         this.setBounds(0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
 
-        setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_ARGB_PRE), new Point(0, 0), ""));
+        setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB_PRE), new Point(0, 0), ""));
     }
 
     public void init()
     {
         ImageConverter.init(getGraphicsConfiguration());
-        image = createVolatileImage(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
+        image = createVolatileImage(SCREEN_WIDTH, SCREEN_HEIGHT);
         createBufferStrategy(2);
         bufferStrategy = getBufferStrategy();
     }
 
-    public void start()
-    {
-        new Thread(this).start();
-    }
+    public void start() { new Thread(this).start(); }
 
-    public void stop()
-    {
-        keepGoing = false;
-    }
+    public void stop() { keepGoing = false; }
 
     MojangLogo mojangLogo = new MojangLogo();
     boolean noLogo = false;
 
-    public void update(Graphics gr)
-    {
-        paint(gr);
-    }
+    public void update(Graphics gr) { paint(gr); }
 
     public void paint(Graphics gr)
     {
@@ -132,7 +129,7 @@ public class Takns extends Canvas implements Runnable
 
         if (image == null || image.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
         {
-            image = createVolatileImage(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
+            image = createVolatileImage(SCREEN_WIDTH, SCREEN_HEIGHT);
         }
 
         if (image != null)
@@ -142,7 +139,27 @@ public class Takns extends Canvas implements Runnable
             g.dispose();
         }
 
-        gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+        updatePresentationViewport();
+        gr.setColor(Color.BLACK);
+        gr.fillRect(0, 0, getWidth(), getHeight());
+        gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+    }
+
+    private void updatePresentationViewport()
+    {
+        int canvasWidth = Math.max(1, getWidth());
+        int canvasHeight = Math.max(1, getHeight());
+
+        presentScale = Math.max(1, Math.min(canvasWidth / SCREEN_WIDTH, canvasHeight / SCREEN_HEIGHT));
+        presentWidth = SCREEN_WIDTH * presentScale;
+        presentHeight = SCREEN_HEIGHT * presentScale;
+        presentOffsetX = (canvasWidth - presentWidth) / 2;
+        presentOffsetY = (canvasHeight - presentHeight) / 2;
+
+        if (inputHandler != null)
+        {
+            inputHandler.setViewport(presentScale, presentOffsetX, presentOffsetY);
+        }
     }
 
     private void setup()
@@ -171,7 +188,7 @@ public class Takns extends Canvas implements Runnable
         {
             if (image == null || image.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
             {
-                image = createVolatileImage(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
+                image = createVolatileImage(SCREEN_WIDTH, SCREEN_HEIGHT);
             }
 
             if (image != null)
@@ -185,30 +202,19 @@ public class Takns extends Canvas implements Runnable
                 g.dispose();
 
                 Graphics gr = bufferStrategy.getDrawGraphics();
-                gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
-
+                updatePresentationViewport();
+                gr.setColor(Color.BLACK);
+                gr.fillRect(0, 0, getWidth(), getHeight());
+                gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
                 gr.dispose();
             }
 
             bufferStrategy.show();
 
-            try
-            {
-                Thread.sleep(20);
-            }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
+            try { Thread.sleep(20); } catch (InterruptedException e) { e.printStackTrace(); }
         }
 
-        try
-        {
-            gst.join();
-        }
-        catch (InterruptedException e1)
-        {
-        }
+        try { gst.join(); } catch (InterruptedException e1) {}
     }
 
     public void run()
@@ -219,49 +225,41 @@ public class Takns extends Canvas implements Runnable
         addMouseMotionListener(inputHandler);
         addMouseListener(inputHandler);
         addKeyListener(inputHandler);
+        updatePresentationViewport();
+
         Graphics2D g = null;
-        if (image != null)
-        {
-            g = image.createGraphics();
-        }
+        if (image != null) g = image.createGraphics();
 
         while (keepGoing)
         {
+            updatePresentationViewport();
+
             if (image == null || image.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
             {
-                if (g != null)
-                {
-                    g.dispose();
-                    g = null;
-                }
-
-                image = createVolatileImage(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE);
+                if (g != null) g.dispose();
+                image = createVolatileImage(SCREEN_WIDTH, SCREEN_HEIGHT);
                 g = image.createGraphics();
             }
 
             synchronized (inputHandler.lock)
             {
                 world.hoveredComponent = gameComponent.getComponentAt(inputHandler.xMouse, inputHandler.yMouse);
-                float alpha = updateTime(); // This will call tick();
+                float alpha = updateTime();
                 world.render(alpha);
-                gameComponent.renderAll(g, alpha);
 
+                // VIEWPORT/UI passes are isolated here: world pass first, then UI pass on top.
+                gameComponent.renderAll(g, alpha);
                 g.drawImage(cursor.image, inputHandler.xMouse, inputHandler.yMouse, null);
             }
 
             Graphics gr = bufferStrategy.getDrawGraphics();
-            gr.drawImage(image, 0, 0, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
+            gr.setColor(Color.BLACK);
+            gr.fillRect(0, 0, getWidth(), getHeight());
+            gr.drawImage(image, presentOffsetX, presentOffsetY, presentOffsetX + presentWidth, presentOffsetY + presentHeight, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, null);
             gr.dispose();
             bufferStrategy.show();
 
-            try
-            {
-                Thread.sleep(2);
-            }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
+            try { Thread.sleep(2); } catch (InterruptedException e) { e.printStackTrace(); }
         }
     }
 
@@ -271,7 +269,6 @@ public class Takns extends Canvas implements Runnable
         boolean downKey = inputHandler.keys[KeyEvent.VK_DOWN] || inputHandler.keys[KeyEvent.VK_NUMPAD2];
         boolean leftKey = inputHandler.keys[KeyEvent.VK_LEFT] || inputHandler.keys[KeyEvent.VK_NUMPAD4];
         boolean rightKey = inputHandler.keys[KeyEvent.VK_RIGHT] || inputHandler.keys[KeyEvent.VK_NUMPAD6];
-
         int ticks = timer.advanceTime();
         if (ticks > MAX_TICKS_PER_FRAME) ticks = MAX_TICKS_PER_FRAME;
         for (int i = 0; i < ticks; i++)
