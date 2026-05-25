@@ -13,20 +13,16 @@ fi
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 
-# Build source list (legacy files are windows-1252 encoded).
 TMP_SOURCES="$(mktemp)"
 trap 'rm -f "$TMP_SOURCES"' EXIT
 
 find "$SRC_DIR" -name '*.java' | sort > "$TMP_SOURCES"
 
-# TaknsApplet depends on legacy JApplet API that is removed from modern JDKs.
-# Default build is desktop-focused and excludes the applet source.
 if [[ "$INCLUDE_APPLET" -ne 1 ]]; then
   grep -v '/TaknsApplet.java$' "$TMP_SOURCES" > "${TMP_SOURCES}.filtered"
   mv "${TMP_SOURCES}.filtered" "$TMP_SOURCES"
 fi
 
-# Prefer --release 8; fallback only if javac is too old to support it.
 if ! xargs -d '\n' javac --release 8 -encoding windows-1252 -d "$OUT_DIR" < "$TMP_SOURCES"; then
   xargs -d '\n' javac -source 1.8 -target 1.8 -encoding windows-1252 -d "$OUT_DIR" < "$TMP_SOURCES"
 fi

@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compile",
+      "type": "shell",
+      "command": "./scripts/compile.sh",
+      "group": "build",
+      "problemMatcher": "$javac"
+    },
+    {
+      "label": "Run",
+      "type": "shell",
+      "command": "./scripts/run.sh",
+      "dependsOn": "Compile"
+    },
+    {
+      "label": "Build fat JAR",
+      "type": "shell",
+      "command": "./scripts/fat-compile.sh",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
