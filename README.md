@@ -4,10 +4,6 @@
 ```
 
 ```bash
-./scripts/compile.sh --with-applet
-```
-
-```bash
 ./scripts/fat-compile.sh
 java -jar dist/takns.jar
 ```
