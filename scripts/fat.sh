@@ -6,7 +6,7 @@ OUT_DIR="$ROOT_DIR/out"
 DIST_DIR="$ROOT_DIR/dist"
 JAR_PATH="$DIST_DIR/takns.jar"
 
-"$ROOT_DIR/scripts/compile.sh"
+"$ROOT_DIR/scripts/clean.sh"
 
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
