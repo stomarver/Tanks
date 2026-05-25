@@ -193,6 +193,17 @@ public abstract class Unit implements SoundSource
         selected = false;
     }
 
+    public void hurt(int amount)
+    {
+        if (amount <= 0 || !alive) return;
+        damage += amount;
+        if (damage >= maxDamage)
+        {
+            damage = maxDamage;
+            alive = false;
+        }
+    }
+
     public float getDistanceSqr(int x0, int y0)
     {
         float xd = x0 - x;

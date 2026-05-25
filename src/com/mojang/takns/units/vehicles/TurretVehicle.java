@@ -122,7 +122,7 @@ public abstract class TurretVehicle extends Vehicle
     {
         int xta = (int) (SIN[baseAngle] * 2.9f) + (int) (SIN[turretAngle] * -17.9f);
         int yta = (int) (-COS[baseAngle] * 2.9f) - (int) (COS[turretAngle] * -17.9f);
-        world.particleSystem.addParticle(Missile.createMissile(x - xta, y - yta, 6, target.x, target.y));
+        world.particleSystem.addParticle(Missile.createMissile(x - xta, y - yta, 6, target.x, target.y, side));
     }
 
     public void render(float alpha)

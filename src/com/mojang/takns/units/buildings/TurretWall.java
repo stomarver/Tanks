@@ -161,7 +161,7 @@ public class TurretWall extends Building
     {
         int xta = (int) (0) + (int) (SIN[turretAngle] * -17.9f);
         int yta = (int) (0) - (int) (COS[turretAngle] * -17.9f);
-        world.particleSystem.addParticle(Missile.createMissile(x - xta, y - yta, 6, target.x, target.y));
+        world.particleSystem.addParticle(Missile.createMissile(x - xta, y - yta, 6, target.x, target.y, side));
     }    
 
     public void render(float alpha)
