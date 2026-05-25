@@ -90,8 +90,9 @@ public class GameView extends UiComponent
             float progress = fx.age / (float) fx.maxAge;
             int radius = 17 - (int) (progress * 14);
             if (radius < 3) radius = 3;
-            float alpha = 1.0f - progress;
+            float alpha = progress;
             if (alpha < 0) alpha = 0;
+            if (alpha > 1) alpha = 1;
             g.setColor(new Color(0.65f, 0.95f, 1.0f, alpha));
             int xScreen = fx.x - world.xCam;
             int yScreen = fx.y - world.yCam;
