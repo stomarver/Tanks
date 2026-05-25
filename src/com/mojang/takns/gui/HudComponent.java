@@ -9,7 +9,7 @@ public class HudComponent extends UiComponent
 {
     public void render(Graphics2D g, float alpha)
     {
-        Text.drawString("Money 3"+world.playerSide.money, g, 2, 2);
+        Text.drawString("\u00A73" + world.playerSide.money + " \u00A77Money", g, 2, 2);
         
         if (world.hoveredComponent!=null)
         {
@@ -21,7 +21,7 @@ public class HudComponent extends UiComponent
                 g.fillRect(0, Takns.SCREEN_HEIGHT - 9, world.gameView.width, 10);
                 g.setColor(new Color(1, 1, 1, 1.0f));
                 
-                Text.drawString(toolTip, g, (world.gameView.width-toolTip.length()*6)/2, Takns.SCREEN_HEIGHT - 6);
+                Text.drawString(toolTip, g, (world.gameView.width-toolTip.length()*6)/2, Takns.SCREEN_HEIGHT - 7);
             }
         }
     }
