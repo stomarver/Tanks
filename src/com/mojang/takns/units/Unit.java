@@ -153,7 +153,7 @@ public abstract class Unit implements SoundSource
             int s = (int) (t * 4);
 
             int r = 12 + s;
-            g.drawRect((int) xo - r - world.xCam, (int) yo - r - world.yCam, r * 2 - 1, r * 2 - 1);
+            g.drawRect((int) xo - r - world.xCam, (int) yo - r - world.yCam - 2, r * 2 - 1, r * 2 - 1);
         }
     }
 

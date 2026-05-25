@@ -35,8 +35,7 @@ public class GameView extends UiComponent
 
     public void render(Graphics2D g, float alpha)
     {
-        world.mapRenderer.render(g);
-        world.postRender(g, alpha);
+        world.mapRenderer.render(g, alpha);
 
         if (state!=null)
         {
