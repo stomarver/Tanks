@@ -22,6 +22,5 @@ replay_pid*
 .DS_Store
 Thumbs.db
 
-# Keep shared Run Configs in VCS
-!.run/
-!.run/*.xml
+.run/
+.run/*.xml
