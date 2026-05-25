@@ -1,0 +1,11 @@
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Keep shared Run Configs in VCS
+!.run/
+!.run/*.xml
+
+# OS/editor
+.DS_Store
