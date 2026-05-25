@@ -7,6 +7,7 @@ import com.mojang.takns.ImageConverter;
 import com.mojang.takns.Side;
 import com.mojang.takns.Sprite;
 import com.mojang.takns.World;
+import com.mojang.takns.particles.CoinPickup;
 import com.mojang.takns.sprites.*;
 import com.mojang.takns.terrain.Terrain;
 import com.mojang.takns.units.*;
@@ -25,6 +26,8 @@ public class Slime extends MoveableUnit
     private boolean jumping = false;
     private int jumpTime = 0;
     private int jumpDuration = 0;
+    private boolean dying = false;
+    private int deathTicks = 0;
 
     public Slime(int xTile, int yTile)
     {
@@ -90,6 +93,19 @@ public class Slime extends MoveableUnit
 
     public void tick()
     {
+        if (dying)
+        {
+            deathTicks++;
+            boolean visible = (deathTicks / 4) % 2 == 0;
+            baseSprite.image = visible ? healthImages[4][0] : null;
+            if (deathTicks >= 16)
+            {
+                alive = false;
+                world.particleSystem.addParticle(new CoinPickup(x, y, 4, world.playerSide, 200));
+            }
+            return;
+        }
+
         super.tick();
         if (world.map.getUnitAt(xJumpTarget, yJumpTarget) != this)
         {
@@ -241,5 +257,19 @@ public class Slime extends MoveableUnit
     public String getName()
     {
         return "Slime";
+    }
+
+    public void hurt(int amount)
+    {
+        if (amount <= 0 || dying || !alive) return;
+        damage += amount;
+        if (damage > maxDamage) damage = maxDamage;
+        if (damage >= maxDamage)
+        {
+            dying = true;
+            jumping = false;
+            jumpTime = 0;
+            z = 0;
+        }
     }
 }
