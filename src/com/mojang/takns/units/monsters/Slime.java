@@ -278,11 +278,11 @@ public class Slime extends MoveableUnit
     {
         BufferedImage[][] images = new BufferedImage[5][source.length];
         float[][] palette = {
-                {1.00f, 1.00f, 1.00f}, // 100% green as original
-                {0.85f, 0.85f, 0.25f}, // 75% yellow + darker
-                {0.85f, 0.50f, 0.18f}, // 66% orange + darker
-                {0.65f, 0.18f, 0.18f}, // 50% red + darker
-                {0.14f, 0.04f, 0.04f}  // 0% almost black with red tint
+                {1.14f, 1.22f, 1.08f}, // 100% brighter saturated green
+                {1.00f, 0.96f, 0.30f}, // 75% brighter yellow + darker
+                {1.00f, 0.58f, 0.20f}, // 66% brighter orange + darker
+                {0.78f, 0.22f, 0.20f}, // 50% brighter red + darker
+                {0.20f, 0.05f, 0.05f}  // 0% almost black with red tint
         };
 
         for (int band = 0; band < images.length; band++)

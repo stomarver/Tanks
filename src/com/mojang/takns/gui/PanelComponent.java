@@ -131,7 +131,7 @@ public class PanelComponent extends UiComponent
         int previewY = y + 64 + 8 + 32 - 32 + 2;
         int previewW = 48;
         unit.renderImageTo(g, x + width / 2, y + 64 + 8 + 24);
-        renderHealthBar(g, unit, previewX, previewY + 48, previewW);
+        renderHealthBar(g, unit, previewX - 1, previewY + 49, previewW + 2);
         Text.drawString(unit.getName(), g, x + (width - unit.getName().length() * 6) / 2, y + 64 + 50);
     }
 

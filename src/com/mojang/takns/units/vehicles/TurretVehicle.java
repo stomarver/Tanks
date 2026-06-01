@@ -57,7 +57,7 @@ public abstract class TurretVehicle extends Vehicle
         aimingAtEnemy = false;
         turnTurretTowards(xt, yt);
     }
-    
+
     private void turnTurretTowards(int xt, int yt)
     {
         float tDir = ((int) (Math.atan2(yt - y, xt - x) * 16 / (Math.PI) + 8f));
@@ -72,7 +72,7 @@ public abstract class TurretVehicle extends Vehicle
         while (dDir < -16)
             dDir += 32;
 
-        dDir = dDir * 0.2f;
+        dDir = dDir * 0.35f;
         if (dDir * dDir < 0.1)
         {
             tdir = tDir;
@@ -93,7 +93,7 @@ public abstract class TurretVehicle extends Vehicle
             tdir += 32;
         while (tdir > 31)
             tdir -= 32;
-    }    
+    }
 
     public void tick()
     {
@@ -110,10 +110,10 @@ public abstract class TurretVehicle extends Vehicle
             tdir -= 32;
 
         turretAngle = (int) (tdir / 2 + 0.5f) & 15;
-        
+
         if (aimingAtEnemy && reloadTime==0 && targetUnit!=null)
         {
-            reloadTime=40;
+            reloadTime=25;
             shootAt(targetUnit);
         }
     }

@@ -307,7 +307,16 @@ public abstract class Unit implements SoundSource
 
     protected void onKilled()
     {
+        clearInfestation();
         alive = false;
+    }
+
+    protected void clearInfestation()
+    {
+        infested = false;
+        infestationDamage = 0;
+        infestationMaxDamage = 0;
+        infestationTicks = 0;
     }
 
     private int getInfestationBand()

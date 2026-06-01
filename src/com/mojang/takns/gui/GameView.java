@@ -173,8 +173,14 @@ public class GameView extends UiComponent
             }
         }
 
+        int returnTile = harvester.getNearestHeadquarterReturnTile();
         int xSilo = harvester.xLastSiloPos * 16 + 8;
         int ySilo = harvester.yLastSiloPos * 16 + 8;
+        if (returnTile >= 0)
+        {
+            xSilo = (returnTile & 63) * 16 + 8;
+            ySilo = (returnTile >> 6) * 16 + 8;
+        }
         if (!drewPath || xPrev != xSilo || yPrev != ySilo)
         {
             g.drawLine(xPrev - world.xCam, yPrev - world.yCam, xSilo - world.xCam, ySilo - world.yCam);

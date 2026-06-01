@@ -198,15 +198,7 @@ public abstract class Vehicle extends MoveableUnit
 
         if (reloadTime>0) reloadTime--;
 
-        if (targetUnit != null && !side.units.seenEnemies.contains(targetUnit))
-        {
-            targetUnit = null;
-        }
-
-        if ((targetUnit == null && random.nextInt(10) == 0) || random.nextInt(40) == 0)
-        {
-            targetUnit = side.units.closestSeenEnemy(x, y, revealRadius);
-        }
+        targetUnit = side.units.closestSeenEnemy(x, y, revealRadius);
 
         updatePathfinder();
 
@@ -243,6 +235,7 @@ public abstract class Vehicle extends MoveableUnit
     {
         if (dying) return;
 
+        clearInfestation();
         dying = true;
         deathTicks = 0;
         moving = false;

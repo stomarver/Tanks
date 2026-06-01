@@ -13,7 +13,7 @@ public class TurretWall extends Building
 {
     protected BufferedImage[] turretImages;
     protected BufferedImage[] turretShadowImages;
-    
+
     Sprite turret, turretShadow;
 
     float tdira;
@@ -22,17 +22,17 @@ public class TurretWall extends Building
     int reloadTime;
     Unit targetUnit;
     boolean aimingAtEnemy;
-    
+
     public TurretWall()
     {
         super(Voxels.wallTurretBase, Voxels.wallTurretShadow);
-        
+
         width = 1;
         height = 1;
 
         cost = 200;
         revealRadius = 4;
-        
+
         turretImages = Voxels.turret;
         turretShadowImages = Voxels.turretShadow;
     }
@@ -61,7 +61,7 @@ public class TurretWall extends Building
 
         tdir = (float) (Math.random() * 32);
         tdira = 0;
-        
+
         render(0);
     }
 
@@ -72,16 +72,16 @@ public class TurretWall extends Building
         updateWalls(xTile - 1, yTile);
         updateWalls(xTile + 1, yTile);
         updateWalls(xTile, yTile - 1);
-        updateWalls(xTile, yTile + 1);    
-        
+        updateWalls(xTile, yTile + 1);
+
         render(0);
     }
-    
+
     protected void aimAt(int xt, int yt)
     {
         turnTurretTowards(xt, yt);
     }
-    
+
     private void turnTurretTowards(int xt, int yt)
     {
         float tDir = ((int) (Math.atan2(yt - y, xt - x) * 16 / (Math.PI) + 8f));
@@ -96,7 +96,7 @@ public class TurretWall extends Building
         while (dDir < -16)
             dDir += 32;
 
-        dDir = dDir * 0.2f;
+        dDir = dDir * 0.35f;
         if (dDir * dDir < 0.1)
         {
             tdir = tDir;
@@ -117,7 +117,7 @@ public class TurretWall extends Building
             tdir += 32;
         while (tdir > 31)
             tdir -= 32;
-    }      
+    }
 
     public void tick()
     {
@@ -125,15 +125,7 @@ public class TurretWall extends Building
 
         if (reloadTime>0) reloadTime--;
 
-        if (targetUnit != null && !side.units.seenEnemies.contains(targetUnit))
-        {
-            targetUnit = null;
-        }
-
-        if ((targetUnit == null && random.nextInt(10) == 0) || random.nextInt(40) == 0)
-        {
-            targetUnit = side.units.closestSeenEnemy(x, y, revealRadius);
-        }
+        targetUnit = side.units.closestSeenEnemy(x, y, revealRadius);
         aimingAtEnemy = false;
         if (targetUnit!=null)
             aimAt((int)(targetUnit.x), (int)(targetUnit.y));
@@ -149,20 +141,20 @@ public class TurretWall extends Building
             tdir -= 32;
 
         turretAngle = (int) (tdir / 2 + 0.5f) & 15;
-        
+
         if (aimingAtEnemy && reloadTime==0 && targetUnit!=null)
         {
-            reloadTime=40;
+            reloadTime=25;
             shootAt(targetUnit);
         }
     }
-    
+
     public void shootAt(Unit target)
     {
         int xta = (int) (0) + (int) (SIN[turretAngle] * -17.9f);
         int yta = (int) (0) - (int) (COS[turretAngle] * -17.9f);
         world.particleSystem.addParticle(Missile.createMissile(x - xta, y - yta, 6, target.x, target.y, side));
-    }    
+    }
 
     public void render(float alpha)
     {
@@ -189,7 +181,7 @@ public class TurretWall extends Building
     {
         return "Turret";
     }
-    
+
     public boolean shouldConnectToWall()
     {
         return true;
