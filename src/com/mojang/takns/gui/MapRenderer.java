@@ -37,6 +37,7 @@ public class MapRenderer
         renderMap(g);
         world.postRender(g, alpha);
         renderSprites(g);
+        world.renderOverlays(g, alpha);
         renderReveal(g);
         renderHide(g);
     }

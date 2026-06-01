@@ -296,6 +296,14 @@ public class World
         }
     }
 
+    public void renderOverlays(Graphics2D g, float alpha)
+    {
+        for (int i=0; i<sides.length; i++)
+        {
+            sides[i].units.renderOverlays(g, alpha);
+        }
+    }
+
     public void moveCamera(boolean u, boolean d, boolean l, boolean r)
     {
         if (!u && !d && !l && !r) return;

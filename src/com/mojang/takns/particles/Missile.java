@@ -87,7 +87,7 @@ public class Missile extends Particle
         if (z <= 0)
         {
             Unit hit = particleSystem.getMap().getUnitAt((int) (x / 16), (int) (y / 16));
-            if (hit != null && hit.side != ownerSide)
+            if (hit != null && (hit.side != ownerSide || hit.infested))
             {
                 hit.hurt(2);
             }
