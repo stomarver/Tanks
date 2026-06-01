@@ -147,6 +147,8 @@ public abstract class Building extends Unit
     {
         if (selected) selectTime--;
 
+        tickInfestation();
+
         xo = x;
         yo = y;
         zo = z;

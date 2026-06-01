@@ -108,19 +108,7 @@ public abstract class Unit implements SoundSource
     {
         if (selected) selectTime--;
 
-        if (infested)
-        {
-            infestationTicks++;
-            if (infestationTicks % Takns.TICKS_PER_SECOND == 0)
-            {
-                hurtBody(1);
-            }
-            if (infestationTicks >= INFESTATION_DURATION)
-            {
-                infested = false;
-                infestationTicks = 0;
-            }
-        }
+        tickInfestation();
 
         if (damage >= maxDamage / 2)
         {
@@ -290,14 +278,36 @@ public abstract class Unit implements SoundSource
         if (infestationMaxDamage <= 0) infestationMaxDamage = 1;
     }
 
-    private void hurtBody(int amount)
+    protected void tickInfestation()
+    {
+        if (infested)
+        {
+            infestationTicks++;
+            if (infestationTicks % Takns.TICKS_PER_SECOND == 0)
+            {
+                hurtBody(1);
+            }
+            if (infestationTicks >= INFESTATION_DURATION)
+            {
+                infested = false;
+                infestationTicks = 0;
+            }
+        }
+    }
+
+    protected void hurtBody(int amount)
     {
         damage += amount;
         if (damage >= maxDamage)
         {
             damage = maxDamage;
-            alive = false;
+            onKilled();
         }
+    }
+
+    protected void onKilled()
+    {
+        alive = false;
     }
 
     private int getInfestationBand()

@@ -9,6 +9,7 @@ import com.mojang.takns.Side;
 import com.mojang.takns.gui.states.*;
 import com.mojang.takns.units.MoveableUnit;
 import com.mojang.takns.units.Unit;
+import com.mojang.takns.units.vehicles.Harvester;
 
 public class GameView extends UiComponent
 {
@@ -110,27 +111,73 @@ public class GameView extends UiComponent
             if (!(unit instanceof MoveableUnit)) continue;
             MoveableUnit moveable = (MoveableUnit) unit;
 
-            int xPrev = (int) moveable.x;
-            int yPrev = (int) moveable.y;
-            int pathLength = moveable.getPathLength();
+            if (unit instanceof Harvester && ((Harvester) unit).cargo > 0)
+            {
+                renderHarvesterSiloPath(g, (Harvester) unit);
+                continue;
+            }
 
+            g.setColor(new Color(1.0f, 0.85f, 0.2f, 0.85f));
+            renderDashedMovePath(g, moveable);
+        }
+    }
+
+    private void renderDashedMovePath(Graphics2D g, MoveableUnit moveable)
+    {
+        int xPrev = (int) moveable.x;
+        int yPrev = (int) moveable.y;
+        int pathLength = moveable.getPathLength();
+
+        for (int p = pathLength - 1; p >= 0; p--)
+        {
+            int tile = moveable.getPathTileAt(p);
+            if (tile < 0) continue;
+            int xTile = tile & 63;
+            int yTile = tile >> 6;
+            int xNext = xTile * 16 + 8;
+            int yNext = yTile * 16 + 8;
+
+            int x0 = xPrev - world.xCam;
+            int y0 = yPrev - world.yCam;
+            int x1 = xNext - world.xCam;
+            int y1 = yNext - world.yCam;
+            drawDashedLine(g, x0, y0, x1, y1, 4, 3);
+            xPrev = xNext;
+            yPrev = yNext;
+        }
+    }
+
+    private void renderHarvesterSiloPath(Graphics2D g, Harvester harvester)
+    {
+        g.setColor(new Color(0.9f, 0.2f, 1.0f, 0.9f));
+
+        int xPrev = (int) harvester.x;
+        int yPrev = (int) harvester.y;
+        int pathLength = harvester.getPathLength();
+        boolean drewPath = false;
+
+        if (harvester.cargo == Harvester.MAX_CARGO)
+        {
             for (int p = pathLength - 1; p >= 0; p--)
             {
-                int tile = moveable.getPathTileAt(p);
+                int tile = harvester.getPathTileAt(p);
                 if (tile < 0) continue;
                 int xTile = tile & 63;
                 int yTile = tile >> 6;
                 int xNext = xTile * 16 + 8;
                 int yNext = yTile * 16 + 8;
-
-                int x0 = xPrev - world.xCam;
-                int y0 = yPrev - world.yCam;
-                int x1 = xNext - world.xCam;
-                int y1 = yNext - world.yCam;
-                drawDashedLine(g, x0, y0, x1, y1, 4, 3);
+                g.drawLine(xPrev - world.xCam, yPrev - world.yCam, xNext - world.xCam, yNext - world.yCam);
                 xPrev = xNext;
                 yPrev = yNext;
+                drewPath = true;
             }
+        }
+
+        int xSilo = harvester.xLastSiloPos * 16 + 8;
+        int ySilo = harvester.yLastSiloPos * 16 + 8;
+        if (!drewPath || xPrev != xSilo || yPrev != ySilo)
+        {
+            g.drawLine(xPrev - world.xCam, yPrev - world.yCam, xSilo - world.xCam, ySilo - world.yCam);
         }
     }
 

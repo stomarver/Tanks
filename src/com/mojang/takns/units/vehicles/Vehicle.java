@@ -1,9 +1,15 @@
 package com.mojang.takns.units.vehicles;
 
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import com.mojang.takns.Side;
 import com.mojang.takns.Sprite;
+import com.mojang.takns.Takns;
+import com.mojang.takns.particles.Explosion;
 import com.mojang.takns.units.*;
 
 public abstract class Vehicle extends MoveableUnit
@@ -23,10 +29,16 @@ public abstract class Vehicle extends MoveableUnit
     int baseAngle;
     protected BufferedImage[][] baseImages;
     protected BufferedImage[] shadowImages;
-    
+
     protected boolean aimingAtEnemy = false;
     protected int reloadTime = 0;
-    
+    private boolean dying = false;
+    private int deathTicks = 0;
+
+    private static final int DEATH_BLACK_TICKS = Takns.TICKS_PER_SECOND * 2;
+    private static final int DEATH_BLINK_TICKS = 16;
+    private static final Map<Image, BufferedImage> blackImageCache = new IdentityHashMap<Image, BufferedImage>();
+
     public Vehicle(BufferedImage[][] baseImages, BufferedImage[] shadowImages)
     {
         this.baseImages = baseImages;
@@ -130,7 +142,7 @@ public abstract class Vehicle extends MoveableUnit
         if (moving) return;
         turnTowards(xt, yt);
     }
-    
+
     private void turnTowards(int xt, int yt)
     {
         float tDir = ((int) (Math.atan2(yt - yOld, xt - xOld) * 16 / (Math.PI) + 8f));
@@ -175,8 +187,15 @@ public abstract class Vehicle extends MoveableUnit
 
     public void tick()
     {
+        if (dying)
+        {
+            tickDeath();
+            return;
+        }
+
         super.tick();
-        
+        if (dying) return;
+
         if (reloadTime>0) reloadTime--;
 
         if (targetUnit != null && !side.units.seenEnemies.contains(targetUnit))
@@ -220,6 +239,33 @@ public abstract class Vehicle extends MoveableUnit
         za -= 0.8f;
     }
 
+    protected void onKilled()
+    {
+        if (dying) return;
+
+        dying = true;
+        deathTicks = 0;
+        moving = false;
+        speed = 0;
+        reloadTime = 0;
+        targetUnit = null;
+        world.particleSystem.addParticle(new Explosion(x, y, z + 6, 0, 0, 0));
+    }
+
+    private void tickDeath()
+    {
+        if (selected) selectTime--;
+        xo = x;
+        yo = y;
+        zo = z;
+
+        deathTicks++;
+        if (deathTicks >= DEATH_BLACK_TICKS + DEATH_BLINK_TICKS)
+        {
+            alive = false;
+        }
+    }
+
     public void render(float alpha)
     {
         super.render(alpha);
@@ -240,5 +286,44 @@ public abstract class Vehicle extends MoveableUnit
         baseShadow.x = xx + zz / 2;
         baseShadow.y = yy + zz;
         baseShadow.image = shadowImages[baseAngle];
+
+        if (dying)
+        {
+            boolean visible = deathTicks < DEATH_BLACK_TICKS || ((deathTicks - DEATH_BLACK_TICKS) / 4) % 2 == 0;
+            if (visible)
+            {
+                baseSprite.image = getBlackImage(baseSprite.image);
+            }
+            else
+            {
+                baseSprite.image = null;
+                baseShadow.image = null;
+            }
+        }
+    }
+
+    private BufferedImage getBlackImage(Image image)
+    {
+        BufferedImage cached = blackImageCache.get(image);
+        if (cached != null) return cached;
+
+        int w = image.getWidth(null);
+        int h = image.getHeight(null);
+        BufferedImage source = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = source.createGraphics();
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+
+        int[] pixels = new int[w * h];
+        source.getRGB(0, 0, w, h, pixels, 0, w);
+        for (int i = 0; i < pixels.length; i++)
+        {
+            int a = (pixels[i] >>> 24) & 0xff;
+            if (a == 0) continue;
+            pixels[i] = (a << 24) | (12 << 16) | (10 << 8) | 8;
+        }
+        source.setRGB(0, 0, w, h, pixels, 0, w);
+        blackImageCache.put(image, source);
+        return source;
     }
 }
