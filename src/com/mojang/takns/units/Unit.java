@@ -46,7 +46,7 @@ public abstract class Unit implements SoundSource
     public int infestationMaxDamage = 0;
     private int infestationTicks = 0;
 
-    private static final int INFESTATION_DURATION = Takns.TICKS_PER_SECOND * 5;
+    private static final int INFESTATION_DURATION = Takns.TICKS_PER_SECOND * 15;
     private static final Map<Image, BufferedImage[]> infestationImageCache = new IdentityHashMap<Image, BufferedImage[]>();
 
     public CompoundSprite sprite = new CompoundSprite();
@@ -111,11 +111,14 @@ public abstract class Unit implements SoundSource
         if (infested)
         {
             infestationTicks++;
+            if (infestationTicks % Takns.TICKS_PER_SECOND == 0)
+            {
+                hurtBody(1);
+            }
             if (infestationTicks >= INFESTATION_DURATION)
             {
                 infested = false;
                 infestationTicks = 0;
-                hurtBody(1);
             }
         }
 

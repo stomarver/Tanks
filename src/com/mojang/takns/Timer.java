@@ -50,7 +50,6 @@ public class Timer
         while (ticks >= ticksPerSecond)
         {
             fps = frames;
-            System.out.println("fps: " + fps);
             frames = 0;
             ticks -= ticksPerSecond;
         }
