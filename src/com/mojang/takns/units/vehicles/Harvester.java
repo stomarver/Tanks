@@ -6,6 +6,7 @@ import com.mojang.takns.terrain.Terrain;
 import com.mojang.takns.terrain.Tiles;
 import com.mojang.takns.units.Unit;
 import com.mojang.takns.units.buildings.Building;
+import com.mojang.takns.units.buildings.Headquarter;
 
 public class Harvester extends Vehicle
 {
@@ -58,7 +59,7 @@ public class Harvester extends Vehicle
             harvest();
         }
     }
-    
+
     private void dumpMoney()
     {
         float xp = this.x + random.nextFloat() * 8 - 4;
@@ -130,6 +131,12 @@ public class Harvester extends Vehicle
                 if (cargo == MAX_CARGO)
                 {
                     baseImages = Voxels.harvesterBase[2];
+                    int returnTile = getNearestHeadquarterReturnTile();
+                    if (returnTile >= 0)
+                    {
+                        xLastSiloPos = returnTile & 63;
+                        yLastSiloPos = returnTile >> 6;
+                    }
                     moveTo(xLastSiloPos, yLastSiloPos);
                 }
 
@@ -190,12 +197,65 @@ public class Harvester extends Vehicle
         }
     }
 
+
+    public Headquarter getNearestHeadquarter()
+    {
+        Headquarter closest = null;
+        float closestD = 0;
+        for (int i = 0; i < side.units.units.size(); i++)
+        {
+            Unit unit = side.units.units.get(i);
+            if (!(unit instanceof Headquarter)) continue;
+            float xd = unit.x - x;
+            float yd = unit.y - y;
+            float d = xd * xd + yd * yd;
+            if (closest == null || d < closestD)
+            {
+                closest = (Headquarter) unit;
+                closestD = d;
+            }
+        }
+        return closest;
+    }
+
+    public int getNearestHeadquarterReturnTile()
+    {
+        Headquarter hq = getNearestHeadquarter();
+        if (hq == null) return -1;
+
+        int hx = (int) (hq.x / 16);
+        int hy = (int) (hq.y / 16);
+        int bestTile = -1;
+        int bestD = 0;
+        for (int xx = hx - 1; xx <= hx + hq.width; xx++)
+        {
+            for (int yy = hy - 1; yy <= hy + hq.height; yy++)
+            {
+                boolean edge = xx == hx - 1 || xx == hx + hq.width || yy == hy - 1 || yy == hy + hq.height;
+                if (!edge) continue;
+                if (xx < 0 || yy < 0 || xx >= 64 || yy >= 64) continue;
+                Unit block = world.map.getUnitAt(xx, yy);
+                if (block != null && block != this) continue;
+
+                int xd = xx - xTile;
+                int yd = yy - yTile;
+                int d = xd * xd + yd * yd;
+                if (bestTile == -1 || d < bestD)
+                {
+                    bestTile = xx + yy * 64;
+                    bestD = d;
+                }
+            }
+        }
+        return bestTile;
+    }
+
     public void moveTo(int xDestination, int yDestination)
     {
         super.moveTo(xDestination, yDestination);
         shouldAutofindTarget = false;
     }
-    
+
     public String getName()
     {
         return "Gem van";

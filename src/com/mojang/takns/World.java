@@ -115,7 +115,7 @@ public class World
 
     private boolean placeMonsters(Side side)
     {
-        for (int i=0; i<64; i++)
+        for (int i=0; i<32; i++)
         {
             int x = random.nextInt(64);
             int y = random.nextInt(64);
@@ -293,6 +293,14 @@ public class World
         for (int i=0; i<sides.length; i++)
         {
             sides[i].units.postRender(g, alpha);
+        }
+    }
+
+    public void renderOverlays(Graphics2D g, float alpha)
+    {
+        for (int i=0; i<sides.length; i++)
+        {
+            sides[i].units.renderOverlays(g, alpha);
         }
     }
 

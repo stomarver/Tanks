@@ -180,12 +180,16 @@ public class Tiles
         {
             for (int x = 0; x < 16; x++)
             {
-                int c = random.nextInt(32);
+                int c = random.nextInt(24);
                 c = c * random.nextInt(256) / 255;
                 int a = 255;
                 int r = ((Terrain.TERRAIN_GRASS.color >> 16) & 0xff) + c;
                 int g = ((Terrain.TERRAIN_GRASS.color >> 8) & 0xff) + c;
                 int b = ((Terrain.TERRAIN_GRASS.color >> 0) & 0xff) + c;
+                int[] saturated = saturate(r, g, b, 1.08f);
+                r = saturated[0];
+                g = saturated[1];
+                b = saturated[2];
 
                 pixels[x + y * 16] = (a << 24) | (r << 16) | (g << 8) | (b);
                 if (random.nextInt(16) == 0 && x > 1)
@@ -206,11 +210,15 @@ public class Tiles
         {
             for (int x = 0; x < 16; x++)
             {
-                int c = random.nextInt(16);
+                int c = random.nextInt(12);
                 int a = 255;
                 int r = ((Terrain.TERRAIN_SAND.color >> 16) & 0xff) + c;
                 int g = ((Terrain.TERRAIN_SAND.color >> 8) & 0xff) + c;
                 int b = ((Terrain.TERRAIN_SAND.color >> 0) & 0xff) + c;
+                int[] saturated = saturate(r, g, b, 1.10f);
+                r = saturated[0];
+                g = saturated[1];
+                b = saturated[2];
 
                 pixels[x + y * 16] = (a << 24) | (r << 16) | (g << 8) | (b);
             }
@@ -226,10 +234,14 @@ public class Tiles
             for (int x = 0; x < 16; x++)
             {
                 int a = 255;
-                int c = random.nextInt(16);
+                int c = random.nextInt(10);
                 int r = ((Terrain.TERRAIN_WATER.color >> 16) & 0xff) + c;
                 int g = ((Terrain.TERRAIN_WATER.color >> 8) & 0xff) + c;
                 int b = ((Terrain.TERRAIN_WATER.color >> 0) & 0xff) + c;
+                int[] saturated = saturate(r, g, b, 1.12f);
+                r = saturated[0];
+                g = saturated[1];
+                b = saturated[2];
 
                 pixels[x + y * 16] = (a << 24) | (r << 16) | (g << 8) | (b);
             }
@@ -262,6 +274,22 @@ public class Tiles
             }
         }
         return pixels;
+    }
+
+    private int[] saturate(int r, int g, int b, float amount)
+    {
+        float gray = (r + g + b) / 3.0f;
+        int rr = clamp((int) (gray + (r - gray) * amount));
+        int gg = clamp((int) (gray + (g - gray) * amount));
+        int bb = clamp((int) (gray + (b - gray) * amount));
+        return new int[] { rr, gg, bb };
+    }
+
+    private int clamp(int v)
+    {
+        if (v < 0) return 0;
+        if (v > 255) return 255;
+        return v;
     }
 
     public void createTile(int offset, int[] pixels, Terrain terrain)

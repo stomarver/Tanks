@@ -66,6 +66,15 @@ public class Units
         }
     }
 
+    public void renderOverlays(Graphics2D g, float alpha)
+    {
+        for (int i = 0; i < units.size(); i++)
+        {
+            Unit unit = units.get(i);
+            unit.renderOverlay(g, alpha);
+        }
+    }
+
     public void unSelectAll()
     {
         selectedUnits.clear();
@@ -167,8 +176,35 @@ public class Units
 
     public Unit closestSeenEnemy(float x, float y, float radius)
     {
+        Unit infested = closestInfestedFriendly(x, y, radius);
+        if (infested != null) return infested;
         return closest(seenEnemies, x, y, radius);
    }
+
+    private Unit closestInfestedFriendly(float x, float y, float radius)
+    {
+        float closestD = -1;
+        Unit closest = null;
+        for (int i = 0; i < units.size(); i++)
+        {
+            Unit unit = units.get(i);
+            if (!unit.infested) continue;
+            float xd = (unit.x-x)/16.0f;
+            float yd = (unit.y-y)/16.0f;
+            if (xd<-radius || xd>radius || yd<-radius || yd>radius) continue;
+
+            float d = xd*xd+yd*yd;
+            if (d<radius*radius)
+            {
+                if (closestD==-1 || d<closestD)
+                {
+                    closestD = d;
+                    closest = unit;
+                }
+            }
+        }
+        return closest;
+    }
 
     private Unit closest(List<Unit> units, float x, float y, float radius)
     {

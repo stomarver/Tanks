@@ -2,16 +2,18 @@ package com.mojang.takns.particles;
 
 import com.mojang.takns.*;
 import com.mojang.takns.sprites.Sprites;
+import com.mojang.takns.units.Unit;
 
 public class Missile extends Particle
 {
     private float x, y, z, xa, ya, za;
+    private Side ownerSide;
     private ParticleSystem particleSystem;
     private Sprite sprite;
     private Sprite shadowSprite;
     private int age = 0;
 
-    public static Missile createMissile(float xStart, float yStart, float zStart, float xTarget, float yTarget)
+    public static Missile createMissile(float xStart, float yStart, float zStart, float xTarget, float yTarget, Side ownerSide)
     {
         float xd = xTarget - xStart;
         float yd = yTarget - yStart;
@@ -28,10 +30,10 @@ public class Missile extends Particle
         float xa = (float) Math.sin(dir) * pow;
         float ya = (float) Math.cos(dir) * pow;
 
-        return new Missile(xStart, yStart, zStart, xa, ya, za);
+        return new Missile(xStart, yStart, zStart, xa, ya, za, ownerSide);
     }
 
-    public Missile(float x, float y, float z, float xa, float ya, float za)
+    public Missile(float x, float y, float z, float xa, float ya, float za, Side ownerSide)
     {
         this.x = x;
         this.y = y;
@@ -39,6 +41,7 @@ public class Missile extends Particle
         this.xa = xa;
         this.ya = ya;
         this.za = za;
+        this.ownerSide = ownerSide;
 
         age = 0;
 
@@ -83,6 +86,11 @@ public class Missile extends Particle
         z += za;
         if (z <= 0)
         {
+            Unit hit = particleSystem.getMap().getUnitAt((int) (x / 16), (int) (y / 16));
+            if (hit != null && (hit.side != ownerSide || hit.infested))
+            {
+                hit.hurt(2);
+            }
             particleSystem.addParticle(new Explosion(x, y, z, xa * 0.2f, ya * 0.2f, 0));
             return false;
         }

@@ -29,13 +29,15 @@ public class MapRenderer
         this.side = side;
     }
 
-    public void render(Graphics2D g)
+    public void render(Graphics2D g, float alpha)
     {
         xCam = world.xCam;
         yCam = world.yCam;
-        
+
         renderMap(g);
+        world.postRender(g, alpha);
         renderSprites(g);
+        world.renderOverlays(g, alpha);
         renderReveal(g);
         renderHide(g);
     }

@@ -127,8 +127,24 @@ public class PanelComponent extends UiComponent
 
     private void renderSingleSelectedUnit(Graphics2D g, float alpha, Unit unit)
     {
+        int previewX = x + width / 2 - 32 + 8;
+        int previewY = y + 64 + 8 + 32 - 32 + 2;
+        int previewW = 48;
         unit.renderImageTo(g, x + width / 2, y + 64 + 8 + 24);
+        renderHealthBar(g, unit, previewX - 1, previewY + 49, previewW + 2);
         Text.drawString(unit.getName(), g, x + (width - unit.getName().length() * 6) / 2, y + 64 + 50);
+    }
+
+    private void renderHealthBar(Graphics2D g, Unit unit, int x, int y, int width)
+    {
+        float hp = unit.getHealthRatio();
+        if (hp < 0) hp = 0;
+        if (hp > 1) hp = 1;
+        int w = (int) (hp * width + 0.5f);
+        g.setColor(new Color(0.05f, 0.1f, 0.05f, 0.9f));
+        g.fillRect(x, y, width, 3);
+        g.setColor(new Color(0.15f, 0.85f, 0.15f, 0.95f));
+        g.fillRect(x, y, w, 3);
     }
 
     private void renderSelectedUnits(Graphics2D g, float alpha, List<Unit> selectedUnits)

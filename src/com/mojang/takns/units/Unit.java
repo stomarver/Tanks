@@ -1,11 +1,19 @@
 package com.mojang.takns.units;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.mojang.takns.CompoundSprite;
 import com.mojang.takns.Side;
+import com.mojang.takns.Sprite;
 import com.mojang.takns.Takns;
 import com.mojang.takns.World;
 import com.mojang.takns.gui.buttons.ButtonType;
@@ -33,6 +41,13 @@ public abstract class Unit implements SoundSource
 
     public int damage = 0;
     public int maxDamage = 10;
+    public boolean infested = false;
+    public int infestationDamage = 0;
+    public int infestationMaxDamage = 0;
+    private int infestationTicks = 0;
+
+    private static final int INFESTATION_DURATION = Takns.TICKS_PER_SECOND * 15;
+    private static final Map<Image, BufferedImage[]> infestationImageCache = new IdentityHashMap<Image, BufferedImage[]>();
 
     public CompoundSprite sprite = new CompoundSprite();
     protected World world;
@@ -92,6 +107,8 @@ public abstract class Unit implements SoundSource
     public void tick()
     {
         if (selected) selectTime--;
+
+        tickInfestation();
 
         if (damage >= maxDamage / 2)
         {
@@ -157,6 +174,42 @@ public abstract class Unit implements SoundSource
         }
     }
 
+
+    public void renderOverlay(Graphics2D g, float alpha)
+    {
+        if (!infested) return;
+
+        float lastAlpha = 1.0f;
+        SortedSet<Sprite> sortedSprites = new TreeSet<Sprite>();
+        sortedSprites.addAll(sprite.sprites);
+        int band = getInfestationBand();
+
+        for (Sprite part : sortedSprites)
+        {
+            if (part.image == null || part.layer == Sprite.LAYER_SHADOW) continue;
+
+            int x = part.x - world.xCam + part.xo;
+            int y = part.y - part.z - world.yCam + part.yo;
+            BufferedImage outline = getInfestationImage(part.image, band, true);
+            BufferedImage overlay = getInfestationImage(part.image, band, false);
+
+            if (lastAlpha != 0.85f)
+            {
+                g.setComposite(AlphaComposite.SrcOver.derive(0.85f));
+                lastAlpha = 0.85f;
+            }
+            g.drawImage(outline, x - 1, y - 1, null);
+
+            if (lastAlpha != 0.90f)
+            {
+                g.setComposite(AlphaComposite.SrcOver.derive(0.90f));
+                lastAlpha = 0.90f;
+            }
+            g.drawImage(overlay, x, y, null);
+        }
+        g.setComposite(AlphaComposite.SrcOver);
+    }
+
     public void addToMinimap(int[] minimapPixels)
     {
         int x = (int) (xo / 16);
@@ -192,6 +245,174 @@ public abstract class Unit implements SoundSource
     {
         selected = false;
     }
+
+    public void hurt(int amount)
+    {
+        if (amount <= 0 || !alive) return;
+        if (infested)
+        {
+            infestationDamage += amount;
+            if (infestationDamage >= infestationMaxDamage)
+            {
+                infestationDamage = infestationMaxDamage;
+                infested = false;
+                world.playerSide.addMoney(80);
+            }
+            return;
+        }
+        hurtBody(amount);
+    }
+
+    public float getHealthRatio()
+    {
+        if (maxDamage <= 0) return 0;
+        return (maxDamage - damage) / (float) maxDamage;
+    }
+
+    public void infest(int slimeDamage, int slimeMaxDamage)
+    {
+        infested = true;
+        infestationDamage = slimeDamage;
+        infestationMaxDamage = slimeMaxDamage;
+        infestationTicks = 0;
+        if (infestationMaxDamage <= 0) infestationMaxDamage = 1;
+    }
+
+    protected void tickInfestation()
+    {
+        if (infested)
+        {
+            infestationTicks++;
+            if (infestationTicks % Takns.TICKS_PER_SECOND == 0)
+            {
+                hurtBody(1);
+            }
+            if (infestationTicks >= INFESTATION_DURATION)
+            {
+                infested = false;
+                infestationTicks = 0;
+            }
+        }
+    }
+
+    protected void hurtBody(int amount)
+    {
+        damage += amount;
+        if (damage >= maxDamage)
+        {
+            damage = maxDamage;
+            onKilled();
+        }
+    }
+
+    protected void onKilled()
+    {
+        clearInfestation();
+        alive = false;
+    }
+
+    protected void clearInfestation()
+    {
+        infested = false;
+        infestationDamage = 0;
+        infestationMaxDamage = 0;
+        infestationTicks = 0;
+    }
+
+    private int getInfestationBand()
+    {
+        float health = 1.0f - infestationDamage / (float) infestationMaxDamage;
+        if (health <= 0.0f) return 4;
+        if (health <= 0.50f) return 3;
+        if (health <= 0.66f) return 2;
+        if (health <= 0.75f) return 1;
+        return 0;
+    }
+
+    private BufferedImage getInfestationImage(Image image, int band, boolean outline)
+    {
+        BufferedImage[] cached = infestationImageCache.get(image);
+        if (cached == null)
+        {
+            cached = new BufferedImage[10];
+            infestationImageCache.put(image, cached);
+        }
+
+        int index = band + (outline ? 5 : 0);
+        if (cached[index] == null)
+        {
+            cached[index] = createInfestationImage(image, getInfestationColor(band), outline);
+        }
+        return cached[index];
+    }
+
+    private BufferedImage createInfestationImage(Image image, Color color, boolean outline)
+    {
+        int w = image.getWidth(null);
+        int h = image.getHeight(null);
+        BufferedImage source = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D sg = source.createGraphics();
+        sg.drawImage(image, 0, 0, null);
+        sg.dispose();
+
+        int[] sourcePixels = new int[w * h];
+        source.getRGB(0, 0, w, h, sourcePixels, 0, w);
+
+        if (outline)
+        {
+            BufferedImage result = new BufferedImage(w + 2, h + 2, BufferedImage.TYPE_INT_ARGB);
+            int[] pixels = new int[(w + 2) * (h + 2)];
+            int outlineColor = (210 << 24) | (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
+            for (int yy = 0; yy < h; yy++)
+            {
+                for (int xx = 0; xx < w; xx++)
+                {
+                    int a = (sourcePixels[xx + yy * w] >>> 24) & 0xff;
+                    if (a == 0) continue;
+                    for (int ya = 0; ya < 3; ya++)
+                    {
+                        for (int xa = 0; xa < 3; xa++)
+                        {
+                            if (xa == 1 && ya == 1) continue;
+                            int p = xx + xa + (yy + ya) * (w + 2);
+                            if (((pixels[p] >>> 24) & 0xff) == 0) pixels[p] = outlineColor;
+                        }
+                    }
+                }
+            }
+            result.setRGB(0, 0, w + 2, h + 2, pixels, 0, w + 2);
+            return result;
+        }
+
+        BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        int[] pixels = new int[w * h];
+        for (int i = 0; i < sourcePixels.length; i++)
+        {
+            int c = sourcePixels[i];
+            int a = (c >>> 24) & 0xff;
+            if (a == 0) continue;
+            int r = (c >>> 16) & 0xff;
+            int g = (c >>> 8) & 0xff;
+            int b = c & 0xff;
+            int gray = (r * 30 + g * 59 + b * 11) / 100;
+            r = (gray * 2 + color.getRed() * 3) / 5;
+            g = (gray * 2 + color.getGreen() * 3) / 5;
+            b = (gray * 2 + color.getBlue() * 3) / 5;
+            pixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        result.setRGB(0, 0, w, h, pixels, 0, w);
+        return result;
+    }
+
+    private Color getInfestationColor(int band)
+    {
+        if (band == 4) return new Color(36, 10, 10);
+        if (band == 3) return new Color(166, 46, 46);
+        if (band == 2) return new Color(217, 128, 46);
+        if (band == 1) return new Color(217, 217, 64);
+        return new Color(32, 220, 32);
+    }
+
 
     public float getDistanceSqr(int x0, int y0)
     {

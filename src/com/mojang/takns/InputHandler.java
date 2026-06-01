@@ -55,6 +55,10 @@ public class InputHandler implements MouseMotionListener, MouseListener, KeyList
 
         xMouse = mouseX / inputScale;
         yMouse = mouseY / inputScale;
+        if (xMouse < 0) xMouse = 0;
+        if (yMouse < 0) yMouse = 0;
+        if (xMouse >= Takns.SCREEN_WIDTH) xMouse = Takns.SCREEN_WIDTH - 1;
+        if (yMouse >= Takns.SCREEN_HEIGHT) yMouse = Takns.SCREEN_HEIGHT - 1;
     }
 
     public void mouseDragged(MouseEvent e)
